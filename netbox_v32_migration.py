@@ -16,10 +16,10 @@ class MigrateSiteContactsScript(Script):
     While suitable for many use cases, the author is encouraged to modify this script to better suit his or her
     own environment as needed.
     """
-    contact_role = ObjectVar(
-        model=ContactRole,
-        description="The role to apply when assigning contacts to sites"
-    )
+    #contact_role = ObjectVar(
+    #    model=ContactRole,
+    #    description="The role to apply when assigning contacts to sites"
+    #)
     contact_priority = ChoiceVar(
         choices=ContactPriorityChoices,
         required=False,
@@ -64,6 +64,8 @@ class MigrateSiteContactsScript(Script):
             return
         self.log_info(f"Found {sites.count()} sites with legacy contact information defined.")
 
+        contact_role = ContactRole.objects.filter(name='Site').first()
+
         for site in sites:
 
             # Extract the contact attributes from the Site
@@ -87,7 +89,7 @@ class MigrateSiteContactsScript(Script):
             assignment = ContactAssignment(
                 object=site,
                 contact=contact,
-                role=data['contact_role'],
+                role=contact_role,
                 priority=data['contact_priority']
             )
             assignment.save()
@@ -113,11 +115,11 @@ class MigrateSiteASNsScript(Script):
     While suitable for many use cases, the author is encouraged to modify this script to better suit his or her
     own environment as needed.
     """
-    asn_rir = ObjectVar(
-        model=RIR,
-        description="RIR to assign to newly created ASNs",
-        label='RIR'
-    )
+    #asn_rir = ObjectVar(
+    #    model=RIR,
+    #    description="RIR to assign to newly created ASNs",
+    #    label='RIR'
+    #)
     clear_site_field = BooleanVar(
         required=False,
         description="Clear legacy site ASN field after migration"
@@ -143,11 +145,12 @@ class MigrateSiteASNsScript(Script):
         for site in sites:
 
             asn = ASN.objects.filter(asn=site.asn).first()
+            rir = RIR.objects.filter(name='Voxbone').first()
 
             # Create a new ASN object if this AS number is new
             if not asn:
                 self.log_success(f"Creating new ASN: {site.asn}")
-                asn = ASN(asn=site.asn, rir=data['asn_rir'])
+                asn = ASN(asn=site.asn, rir=rir)
                 asn.save()
                 asns_created += 1
 
